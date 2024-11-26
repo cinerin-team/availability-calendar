@@ -32,19 +32,26 @@ function App() {
   	const email = e.target.email.value;
   	const password = e.target.password.value;
 
-  	const response = await fetch(`${API_BASE_URL}/register`, {
-    		method: "POST",
-    		headers: { "Content-Type": "application/json" },
-    		body: JSON.stringify({ email, password }),
-  	});
+  	try {
+    		const response = await fetch("http://pmqxyz.hopto.org:8000/register", {
+      			method: "POST",
+      			headers: { "Content-Type": "application/json" },
+      			body: JSON.stringify({ email, password }),
+    			});
 
-  	if (response.ok) {
-    		alert("Registration successful!");
-  	} else {
-    		alert("Registration failed");
+    		if (response.ok) {
+      			alert("Registration successful!");
+    		} else {
+      			const errorData = await response.json();
+      			console.error("Registration error:", errorData);
+      			alert("Registration failed: " + (errorData.detail || "Unknown error"));
+    		}
+  	} catch (error) {
+    		console.error("Fetch error:", error);
+    		alert("An error occurred. Check console for details.");
   	}
   };
-
+    
   const addEntry = async (date, type) => {
     const response = await fetch("http://localhost:8000/entries", {
       method: "POST",

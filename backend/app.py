@@ -57,8 +57,10 @@ class EntryCreate(BaseModel):
 # Regisztrációs végpont
 @app.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
-    # Debug log a kapott adatok ellenőrzéséhez
-    print("Received data:", user.dict())
+    # Ellenőrizd, hogy a felhasználó már létezik-e
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
     hashed_password = pwd_context.hash(user.password)
     db_user = User(email=user.email, hashed_password=hashed_password)
     db.add(db_user)
