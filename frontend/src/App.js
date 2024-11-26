@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [entries, setEntries] = useState([]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -15,6 +17,8 @@ function App() {
     });
 
     if (response.ok) {
+      const data = await response.json();
+      setUserId(data.user_id);
       setIsLoggedIn(true);
     } else {
       alert("Login failed");
@@ -39,6 +43,32 @@ function App() {
     }
   };
 
+  const addEntry = async (date, type) => {
+    const response = await fetch("http://localhost:8000/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, type, user_id: userId }),
+    });
+
+    if (response.ok) {
+      fetchEntries();
+    } else {
+      alert("Failed to add entry");
+    }
+  };
+
+  const fetchEntries = async () => {
+    const response = await fetch(`http://localhost:8000/entries?user_id=${userId}`);
+    const data = await response.json();
+    setEntries(data);
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchEntries();
+    }
+  }, [isLoggedIn]);
+
   return (
     <div>
       <h1>Calendar App</h1>
@@ -59,8 +89,17 @@ function App() {
         </div>
       ) : (
         <div>
-          <h2>Welcome!</h2>
-          <p>The calendar will be here soon!</p>
+          <h2>Your Calendar</h2>
+          <button onClick={() => addEntry("2024-01-01", "home_office")}>Add Home Office</button>
+          <button onClick={() => addEntry("2024-01-02", "office")}>Add Office</button>
+          <button onClick={() => addEntry("2024-01-03", "vacation")}>Add Vacation</button>
+          <ul>
+            {entries.map((entry, index) => (
+              <li key={index}>
+                {entry.date}: {entry.type}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
