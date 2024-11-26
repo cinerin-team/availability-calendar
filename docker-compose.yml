@@ -7,6 +7,8 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    networks:
+      - app-network
 
   frontend:
     build: ./frontend
@@ -14,3 +16,9 @@ services:
       - "8080:3000"
     volumes:
       - ./frontend:/usr/src/app
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

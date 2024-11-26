@@ -69,17 +69,22 @@ class EntryCreate(BaseModel):
 
 # Regisztrációs végpont
 @app.post("/register")
-async def register_user(user: UserCreate, request: Request, db: Session = Depends(SessionLocal)):
-    raw_data = await request.json()  # A nyers JSON adat naplózása
-    logger.debug(f"Raw data received for register: {raw_data}")
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = pwd_context.hash(user.password)
-    db_user = User(email=user.email, hashed_password=hashed_password)
-    db.add(db_user)
-    db.commit()
-    return {"message": "User registered successfully."}
+async def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
+    try:
+        logger.debug(f"Validated user data: {user.dict()}")
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if db_user:
+            logger.debug("User already registered.")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        hashed_password = pwd_context.hash(user.password)
+        db_user = User(email=user.email, hashed_password=hashed_password)
+        db.add(db_user)
+        db.commit()
+        logger.debug("User registered successfully.")
+        return {"message": "User registered successfully."}
+    except Exception as e:
+        logger.error(f"Unexpected error during registration: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Bejelentkezési végpont
 @app.post("/login")
