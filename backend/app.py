@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -6,6 +6,19 @@ from sqlalchemy.orm import sessionmaker, Session, relationship
 from passlib.context import CryptContext
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import date
+import logging
+
+# Explicit logging beállítás
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("backend")
+
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+logger.debug("Logging is configured.")  # Teszt üzenet
 
 # Adatbázis beállítás
 DATABASE_URL = "sqlite:///./test.db"
@@ -56,8 +69,9 @@ class EntryCreate(BaseModel):
 
 # Regisztrációs végpont
 @app.post("/register")
-def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
-    # Ellenőrizd, hogy a felhasználó már létezik-e
+async def register_user(user: UserCreate, request: Request, db: Session = Depends(SessionLocal)):
+    raw_data = await request.json()  # A nyers JSON adat naplózása
+    logger.debug(f"Raw data received for register: {raw_data}")
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -69,9 +83,12 @@ def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
 
 # Bejelentkezési végpont
 @app.post("/login")
-def login_user(user: UserCreate, db: Session = Depends(SessionLocal)):
+async def login_user(user: UserCreate, request: Request, db: Session = Depends(SessionLocal)):
+    raw_data = await request.json()  # A nyers JSON adat naplózása
+    logger.debug(f"Raw data received for login: {raw_data}")
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not pwd_context.verify(user.password, db_user.hashed_password):
+        logger.debug("Invalid credentials provided.")
         raise HTTPException(status_code=400, detail="Invalid credentials")
     return {"user_id": db_user.id}
 
