@@ -5,42 +5,44 @@ function App() {
   const [userId, setUserId] = useState(null);
   const [entries, setEntries] = useState([]);
 
+  const API_BASE_URL = "http://pmqxyz.hopto.org:8000";
+
   const handleLogin = async (e) => {
-    e.preventDefault();
-    const email = e.target.email.value;
-    const password = e.target.password.value;
+  	e.preventDefault();
+  	const email = e.target.email.value;
+  	const password = e.target.password.value;
 
-    const response = await fetch("http://localhost:8000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  	const response = await fetch(`${API_BASE_URL}/login`, {
+  		method: "POST",
+  		headers: { "Content-Type": "application/json" },
+  		body: JSON.stringify({ email, password }),
+  	});
 
-    if (response.ok) {
-      const data = await response.json();
-      setUserId(data.user_id);
-      setIsLoggedIn(true);
-    } else {
-      alert("Login failed");
-    }
+  	if (response.ok) {
+  		const data = await response.json();
+  		setUserId(data.user_id);
+  		setIsLoggedIn(true);
+  	} else {
+  		alert("Login failed");
+  	}
   };
 
   const handleRegister = async (e) => {
-    e.preventDefault();
-    const email = e.target.email.value;
-    const password = e.target.password.value;
+  	e.preventDefault();
+  	const email = e.target.email.value;
+  	const password = e.target.password.value;
 
-    const response = await fetch("http://localhost:8000/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  	const response = await fetch(`${API_BASE_URL}/register`, {
+    		method: "POST",
+    		headers: { "Content-Type": "application/json" },
+    		body: JSON.stringify({ email, password }),
+  	});
 
-    if (response.ok) {
-      alert("Registration successful!");
-    } else {
-      alert("Registration failed");
-    }
+  	if (response.ok) {
+    		alert("Registration successful!");
+  	} else {
+    		alert("Registration failed");
+  	}
   };
 
   const addEntry = async (date, type) => {
