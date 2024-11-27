@@ -9,37 +9,12 @@ from sqlalchemy import Column, Integer, String, Date, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 
-# Explicit logging beállítás
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("backend")
+# Inicializáció
+models.Base.metadata.create_all(bind=engine)
 
-handler = logging.StreamHandler()
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
-logger.debug("Logging is configured.")  # Teszt üzenet
-
-# Adatbázis beállítás
-DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
-Base = declarative_base()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# FastAPI alkalmazás
 app = FastAPI()
 
-# CORS middleware a frontend és backend közötti kommunikációhoz
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Fejlesztéshez minden forrást engedélyez
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Adatbázis modellek
 class User(Base):
@@ -74,27 +49,14 @@ class EntryCreate(BaseModel):
     type: str
 
 
-# Regisztrációs végpont
-@app.post("/register")
-async def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
+# Dependency
+def get_db():
+    db = SessionLocal()
     try:
-        logger.debug(f"Validated user data: {user.dict()}")
-        db_user = db.query(User).filter(User.email == user.email).first()
-        if db_user:
-            logger.debug("User already registered.")
-            raise HTTPException(status_code=400, detail="Email already registered")
-        hashed_password = pwd_context.hash(user.password)
-        db_user = User(email=user.email, hashed_password=hashed_password)
-        db.add(db_user)
-        db.commit()
-        logger.debug("User registered successfully.")
-        return {"message": "User registered successfully."}
-    except Exception as e:
-        logger.error(f"Unexpected error during registration: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        yield db
+    finally:
+        db.close()
 
-
-# Bejelentkezési végpont
 @app.post("/login")
 async def login_user(user: UserCreate, request: Request, db: Session = Depends(SessionLocal)):
     raw_data = await request.json()  # A nyers JSON adat naplózása
@@ -111,8 +73,19 @@ async def login_user(user: UserCreate, request: Request, db: Session = Depends(S
 def add_entry(entry: EntryCreate, user_id: int, db: Session = Depends(SessionLocal)):
     db_entry = CalendarEntry(user_id=user_id, date=entry.date, type=entry.type)
     db.add(db_entry)
+# Regisztráció végpont
+@app.post("/register", response_model=schemas.UserResponse)
+async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    hashed_password = pwd_context.hash(user.password)
+    new_user = models.User(email=user.email, hashed_password=hashed_password)
+    db.add(new_user)
     db.commit()
-    return {"message": "Entry added successfully."}
+    db.refresh(new_user)
+    return new_user
 
 
 # Naptárbejegyzések lekérdezése
@@ -120,3 +93,11 @@ def add_entry(entry: EntryCreate, user_id: int, db: Session = Depends(SessionLoc
 def get_entries(user_id: int, db: Session = Depends(SessionLocal)):
     entries = db.query(CalendarEntry).filter_by(user_id=user_id).all()
     return entries
+# Login végpont
+@app.post("/login")
+async def login_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if not db_user or not pwd_context.verify(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    return {"message": "Login successful"}
