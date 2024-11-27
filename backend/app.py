@@ -1,12 +1,13 @@
+import logging
+from datetime import date
+
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
+from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
-from passlib.context import CryptContext
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import date
-import logging
 
 # Explicit logging beállítás
 logging.basicConfig(level=logging.DEBUG)
@@ -39,12 +40,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Adatbázis modellek
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+
 
 class CalendarEntry(Base):
     __tablename__ = "calendar_entries"
@@ -54,18 +57,22 @@ class CalendarEntry(Base):
     type = Column(String)
     user = relationship("User", back_populates="entries")
 
+
 User.entries = relationship("CalendarEntry", back_populates="user")
 
 Base.metadata.create_all(bind=engine)
+
 
 # Pydantic modellek
 class UserCreate(BaseModel):
     email: str
     password: str
 
+
 class EntryCreate(BaseModel):
     date: date
     type: str
+
 
 # Regisztrációs végpont
 @app.post("/register")
@@ -86,6 +93,7 @@ async def register_user(user: UserCreate, db: Session = Depends(SessionLocal)):
         logger.error(f"Unexpected error during registration: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
 # Bejelentkezési végpont
 @app.post("/login")
 async def login_user(user: UserCreate, request: Request, db: Session = Depends(SessionLocal)):
@@ -97,6 +105,7 @@ async def login_user(user: UserCreate, request: Request, db: Session = Depends(S
         raise HTTPException(status_code=400, detail="Invalid credentials")
     return {"user_id": db_user.id}
 
+
 # Naptárbejegyzés hozzáadása
 @app.post("/entries")
 def add_entry(entry: EntryCreate, user_id: int, db: Session = Depends(SessionLocal)):
@@ -104,6 +113,7 @@ def add_entry(entry: EntryCreate, user_id: int, db: Session = Depends(SessionLoc
     db.add(db_entry)
     db.commit()
     return {"message": "Entry added successfully."}
+
 
 # Naptárbejegyzések lekérdezése
 @app.get("/entries")
