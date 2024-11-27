@@ -13,3 +13,6 @@ docker-compose up --build
 
 
 npm install @fullcalendar/react @fullcalendar/daygrid --force
+
+docker system prune -a --volumes
+docker builder prune -a
