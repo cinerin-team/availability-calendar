@@ -1,24 +1,11 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
-      - ./backend:/app
-    networks:
-      - app-network
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "8080:3000"
-    volumes:
-      - ./frontend:/usr/src/app
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
+      - ./backend:/app/backend
