@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8080"  # Nem közvetlenül érhető el a külvilág számára
     volumes:
       - ./backend:/app/backend
 
@@ -14,9 +14,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     stdin_open: true
     tty: true
     volumes:
       - ./frontend:/app
+    ports:
+      - "3000"  # Nem közvetlenül érhető el a külvilág számára
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"  # Az Nginx lesz elérhető a külvilág számára
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro

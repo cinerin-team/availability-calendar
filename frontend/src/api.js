@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:8080", // Backend URL
+  baseURL: "/api", // Nginx-en keresztül érjük el a backendet
 });
 
 // Regisztráció
