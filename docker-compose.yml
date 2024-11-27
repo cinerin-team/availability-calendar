@@ -1,24 +1,32 @@
-version: '3.8'
+version: "3.8"
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080"  # Nem közvetlenül érhető el a külvilág számára
     volumes:
-      - ./backend:/app
-    networks:
-      - app-network
+      - ./backend:/app/backend
 
   frontend:
-    build: ./frontend
-    ports:
-      - "8080:3000"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
     volumes:
-      - ./frontend:/usr/src/app
-    networks:
-      - app-network
+      - ./frontend:/app
+    ports:
+      - "3000"  # Nem közvetlenül érhető el a külvilág számára
 
-networks:
-  app-network:
-    driver: bridge
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"  # Az Nginx lesz elérhető a külvilág számára
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
