@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
+
+import jwt
 from fastapi import FastAPI, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
-import jwt
-from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+
 from backend.database import engine, SessionLocal, Base
 from backend.models import User, CalendarEntry
 from backend.schemas import UserCreate, Token, CalendarUpdate
@@ -33,6 +35,8 @@ def init_db():
         user = User(email="a@a.a", hashed_password=pwd_context.hash("a"))
         db.add(user)
         db.commit()
+
+
 init_db()
 
 
@@ -72,7 +76,8 @@ def get_calendar(db: Session = Depends(get_db), token: str = Depends(oauth2_sche
 def update_calendar(entry: CalendarUpdate, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     user_email = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["sub"]
     user = db.query(User).filter(User.email == user_email).first()
-    db_entry = db.query(CalendarEntry).filter(CalendarEntry.user_id == user.id, CalendarEntry.date == entry.date).first()
+    db_entry = db.query(CalendarEntry).filter(CalendarEntry.user_id == user.id,
+                                              CalendarEntry.date == entry.date).first()
     if db_entry:
         db_entry.type = entry.type
     else:
