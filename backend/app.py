@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend.database import engine, SessionLocal, Base
 from backend.models import User, CalendarEntry
-from backend.schemas import UserCreate, Token, CalendarUpdate
+from .schemas import UserCreate, Token, CalendarUpdate
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
