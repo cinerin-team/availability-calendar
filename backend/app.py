@@ -41,13 +41,14 @@ init_db()
 
 
 # Register user
-@app.post("/register", status_code=status.HTTP_201_CREATED)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == user.email).first():
+@app.post("/register")
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_password = pwd_context.hash(user.password)
-    db_user = User(email=user.email, hashed_password=hashed_password)
-    db.add(db_user)
+    new_user = User(email=user.email, hashed_password=hashed_password)
+    db.add(new_user)
     db.commit()
     return {"message": "User registered successfully"}
 
