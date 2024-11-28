@@ -1,27 +1,28 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: "/api", // Nginx-en keresztül érjük el a backendet
-});
+const API_BASE_URL = "/api";
 
-// Regisztráció
-export const register = async (email, password) => {
-  const response = await API.post("/register", { email, password });
-  return response.data;
+export const registerUser = (email, password) => {
+  return axios.post(`${API_BASE_URL}/register`, { email, password });
 };
 
-// Bejelentkezés
-export const login = async (email, password) => {
-  const response = await API.post("/token", new URLSearchParams({ username: email, password }));
-  return response.data;
+export const loginUser = (email, password) => {
+  const formData = new URLSearchParams();
+  formData.append("username", email);
+  formData.append("password", password);
+  return axios.post(`${API_BASE_URL}/token`, formData);
 };
 
-// Védett adat lekérése
-export const getProtectedData = async (token) => {
-  const response = await API.get("/protected", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export const getCalendar = (token) => {
+  return axios.get(`${API_BASE_URL}/calendar`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data;
+};
+
+export const updateCalendar = (token, date, type) => {
+  return axios.post(
+    `${API_BASE_URL}/calendar`,
+    { date, type },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
 };

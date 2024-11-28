@@ -1,27 +1,23 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from .database import engine, SessionLocal, Base
+from .models import User, CalendarEntry
+from .schemas import UserCreate, Token, CalendarUpdate
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
-from . import models, schemas
-from .database import engine, SessionLocal
-from jose import JWTError, jwt
+import jwt
 from datetime import datetime, timedelta
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
 
-# Inicializálás
-models.Base.metadata.create_all(bind=engine)
+SECRET_KEY = "your_secret_key"
+ALGORITHM = "HS256"
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-# Jelszó hashelés konfiguráció
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# OAuth2 Token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-# Dependency az adatbázis kapcsolathoz
 def get_db():
     db = SessionLocal()
     try:
@@ -30,70 +26,57 @@ def get_db():
         db.close()
 
 
-# JWT konfiguráció
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Create default user
+def init_db():
+    db = SessionLocal()
+    if not db.query(User).filter(User.email == "a@a.a").first():
+        user = User(email="a@a.a", hashed_password=pwd_context.hash("a"))
+        db.add(user)
+        db.commit()
+init_db()
 
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not db_user or not pwd_context.verify(form_data.password, db_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-
-    access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-# Regisztráció végpont
-@app.post("/register", response_model=schemas.UserResponse)
-async def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
+# Register user
+@app.post("/register", status_code=status.HTTP_201_CREATED)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-
     hashed_password = pwd_context.hash(user.password)
-    new_user = models.User(email=user.email, hashed_password=hashed_password)
-    db.add(new_user)
+    db_user = User(email=user.email, hashed_password=hashed_password)
+    db.add(db_user)
     db.commit()
-    db.refresh(new_user)
-    return new_user
+    return {"message": "User registered successfully"}
 
 
-# Login végpont
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    if not db_user or not pwd_context.verify(form_data.password, db_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-
-    return {"access_token": form_data.username, "token_type": "bearer"}
-
-
-# Tesztoldal
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# Login and generate token
+@app.post("/token", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token_data = {"sub": user.email, "exp": datetime.utcnow() + timedelta(hours=1)}
+    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": token, "token_type": "bearer"}
 
 
-def verify_token(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return username
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+# Get user calendar
+@app.get("/calendar")
+def get_calendar(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    user_email = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["sub"]
+    user = db.query(User).filter(User.email == user_email).first()
+    return db.query(CalendarEntry).filter(CalendarEntry.user_id == user.id).all()
 
 
-@app.get("/protected")
-async def protected_route(current_user: str = Depends(verify_token)):
-    return {"message": "Welcome!", "user": current_user}
+# Update calendar entry
+@app.post("/calendar")
+def update_calendar(entry: CalendarUpdate, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    user_email = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["sub"]
+    user = db.query(User).filter(User.email == user_email).first()
+    db_entry = db.query(CalendarEntry).filter(CalendarEntry.user_id == user.id, CalendarEntry.date == entry.date).first()
+    if db_entry:
+        db_entry.type = entry.type
+    else:
+        db_entry = CalendarEntry(user_id=user.id, date=entry.date, type=entry.type)
+        db.add(db_entry)
+    db.commit()
+    return {"message": "Calendar updated successfully"}

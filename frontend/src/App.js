@@ -1,21 +1,19 @@
-import logo from './logo.svg';
-import './App.css';
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Protected from "./pages/Protected";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./Login";
+import Register from "./Register";
+import Calendar from "./Calendar";
 
-const App = () => {
+function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/protected" element={<Protected />} />
+        <Route path="/calendar" element={<Calendar />} />
       </Routes>
     </Router>
   );
-};
+}
 
 export default App;
