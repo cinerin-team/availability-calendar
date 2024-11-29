@@ -1,16 +1,11 @@
 # Build phase
 FROM node:18 AS builder
-
 WORKDIR /app
-
 COPY package*.json ./
-
 RUN npm install
-
 COPY . .
+RUN npm run build
 
-CMD ["npm", "start"]
-
-# Nginx image
+# Nginx phase
 FROM nginx:latest
 COPY --from=builder /app/build /usr/share/nginx/html
