@@ -1,4 +1,5 @@
-FROM node:18
+# Build phase
+FROM node:18 AS builder
 
 WORKDIR /app
 
