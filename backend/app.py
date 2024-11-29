@@ -6,9 +6,9 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from .database import engine, SessionLocal, Base
-from .models import User, CalendarEntry
-from .schemas import UserCreate, Token, CalendarUpdate
+from database import engine, SessionLocal, Base
+from models import User, CalendarEntry
+from schemas import UserCreate, Token, CalendarUpdate
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
