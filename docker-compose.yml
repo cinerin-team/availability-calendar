@@ -14,10 +14,13 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     stdin_open: true
     tty: true
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:latest
