@@ -68,7 +68,8 @@ def login_required(f):
 @app.route("/")
 @login_required
 def index():
-    # Main page shows the logged-in user's calendar
+    # The main page shows a calendar for non-admin users.
+    # For admin, we show a button to view all users' statistics.
     return render_template("index.html", email=session["email"])
 
 @app.route("/register", methods=["GET", "POST"])
@@ -195,6 +196,38 @@ def stats():
         result = calculate_stats(day_states, year)
         result["year"] = year
     return jsonify(result)
+
+# --- Admin Dashboard ---
+@app.route("/admin/stats")
+@login_required
+def admin_stats():
+    if session["email"] != "admin@example.com":
+        flash("Access denied.")
+        return redirect(url_for("index"))
+    # Ha a URL-ben meg van adva az év, azt használjuk, különben a jelenlegi évet.
+    year_param = request.args.get("year")
+    try:
+        current_year = int(year_param) if year_param else datetime.now().year
+    except ValueError:
+        current_year = datetime.now().year
+
+    stats_data = []
+    # Iterálunk az összes felhasználón (kivéve az admin) statisztikáin
+    for email in users:
+        if email == "admin@example.com":
+            continue
+        user_day_states = day_states_all.get(email, {})
+        monthly_stats = {}
+        for m in range(1, 13):
+            monthly_stats[m] = calculate_stats(user_day_states, current_year, m)
+        yearly_stats = calculate_stats(user_day_states, current_year)
+        stats_data.append({
+            "email": email,
+            "monthly": monthly_stats,
+            "yearly": yearly_stats
+        })
+    return render_template("admin_stats.html", stats_data=stats_data,
+                           current_year=current_year)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=9090, debug=True)

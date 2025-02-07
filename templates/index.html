@@ -10,31 +10,35 @@
         Logged in as: {{ email }} | <a href="/logout">Logout</a>
     </div>
     <h1>60-40 Calculator</h1>
-    <div id="calendar-controls">
-        <button id="prev-month">Previous Month</button>
-        <button id="today">Today</button>
-        <button id="next-month">Next Month</button>
-        <span id="current-month-year"></span>
-    </div>
-    <div id="calendar"></div>
-    <div id="stats">
-        <h2>Monthly Statistics</h2>
-        <div id="monthly-stats"></div>
-        <h2>Yearly Statistics</h2>
-        <div id="yearly-stats"></div>
-    </div>
-    
-    <!-- Legend -->
-    <div id="legend">
-        <h2>Legend</h2>
-        <ul>
-            <li><span class="legend-box empty"></span> Empty</li>
-            <li><span class="legend-box office"></span> Office</li>
-            <li><span class="legend-box home"></span> Home</li>
-            <li><span class="legend-box day_off"></span> Day Off</li>
-        </ul>
-    </div>
-
-    <script src="/static/calendar.js"></script>
+    {% if email == "admin@example.com" %}
+        <p>You are the admin. Please view all users' statistics:</p>
+        <a href="/admin/stats"><button>View All Users Statistics</button></a>
+    {% else %}
+        <div id="calendar-controls">
+            <button id="prev-month">Previous Month</button>
+            <button id="today">Today</button>
+            <button id="next-month">Next Month</button>
+            <span id="current-month-year"></span>
+        </div>
+        <div id="calendar"></div>
+        <div id="stats">
+            <h2>Monthly Statistics</h2>
+            <div id="monthly-stats"></div>
+            <h2>Yearly Statistics</h2>
+            <div id="yearly-stats"></div>
+        </div>
+        
+        <!-- Legend -->
+        <div id="legend">
+            <h2>Legend</h2>
+            <ul>
+                <li><span class="legend-box empty"></span> Empty</li>
+                <li><span class="legend-box office"></span> Office</li>
+                <li><span class="legend-box home"></span> Home</li>
+                <li><span class="legend-box day_off"></span> Day Off</li>
+            </ul>
+        </div>
+        <script src="/static/calendar.js"></script>
+    {% endif %}
 </body>
 </html>
