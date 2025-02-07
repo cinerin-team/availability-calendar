@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-pydantic[email]
-passlib[bcrypt]
-python-jose
-PyJWT
-python-multipart

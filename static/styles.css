@@ -1,0 +1,74 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#calendar {
+    margin-top: 20px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    text-align: center;
+    padding: 10px;
+}
+
+/* Háttérszínek a napok állapota szerint */
+td.empty {
+    background-color: #fff;
+}
+
+td.office {
+    background-color: #aaf;
+}
+
+td.home {
+    background-color: #afa;
+}
+
+#calendar-controls {
+    margin-bottom: 10px;
+}
+
+/* Legend stílusok */
+#legend {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    width: fit-content;
+}
+
+#legend ul {
+    list-style: none;
+    padding: 0;
+}
+
+#legend li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-box {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+.legend-box.empty {
+    background-color: #fff;
+}
+
+.legend-box.office {
+    background-color: #aaf;
+}
+
+.legend-box.home {
+    background-color: #afa;
+}

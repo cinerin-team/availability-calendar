@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <title>Naptár - Munka állapot</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Naptár - Munka állapot</h1>
+    <div id="calendar-controls">
+        <button id="prev-month">Előző hónap</button>
+        <span id="current-month-year"></span>
+        <button id="next-month">Következő hónap</button>
+    </div>
+    <div id="calendar"></div>
+    <div id="stats">
+        <h2>Havi statisztikák</h2>
+        <div id="monthly-stats"></div>
+        <h2>Éves statisztikák</h2>
+        <div id="yearly-stats"></div>
+    </div>
+    
+    <!-- Legend hozzáadása -->
+    <div id="legend">
+        <h2>Legenda</h2>
+        <ul>
+            <li><span class="legend-box empty"></span> Üres nap</li>
+            <li><span class="legend-box office"></span> Irodai munka</li>
+            <li><span class="legend-box home"></span> Otthoni munka</li>
+        </ul>
+    </div>
+
+    <script src="/static/calendar.js"></script>
+</body>
+</html>
