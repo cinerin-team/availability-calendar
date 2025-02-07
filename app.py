@@ -7,15 +7,22 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "this-is-a-secret-key"  # For production, use a stronger random key
+app.secret_key = "cirm0sc1ca-haj-hová-lett-avaj1!G"  # For production, use a stronger random key
 
-# Data file paths
+# --- Configuration handling ---
+CONFIG_FILE = "data/config.json"
+if os.path.exists(CONFIG_FILE):
+    with open(CONFIG_FILE, "r") as f:
+        config = json.load(f)
+else:
+    config = {"lock_past_months": True}  # Alapértelmezett: lezárt (csak az aktuális hónap módosítható)
+    os.makedirs("data", exist_ok=True)
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f)
+
+# --- Users and Day States ---
 USERS_FILE = "data/users.json"
 DAY_STATES_FILE = "data/day_states.json"
-
-# Ensure the data folder exists
-if not os.path.exists("data"):
-    os.makedirs("data")
 
 # Load users
 if os.path.exists(USERS_FILE):
@@ -27,7 +34,7 @@ if os.path.exists(USERS_FILE):
 else:
     users = {}
 
-# If no admin user exists, create one with email "admin@example.com"
+# Create admin user if not exists (password hash used)
 if "admin@example.com" not in users:
     users["admin@example.com"] = generate_password_hash("admin123")
     with open(USERS_FILE, "w") as f:
@@ -37,7 +44,7 @@ def save_users():
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
 
-# Load calendar data (stored per user, key = email)
+# Load day states
 if os.path.exists(DAY_STATES_FILE):
     with open(DAY_STATES_FILE, "r") as f:
         try:
@@ -52,12 +59,39 @@ def save_day_states():
         json.dump(day_states_all, f)
 
 def get_user_day_states(email):
-    """Initialize an empty calendar for the user if it doesn't exist yet."""
     if email not in day_states_all:
         day_states_all[email] = {}
     return day_states_all[email]
 
-# Login required decorator
+# --- Helper function for statistics ---
+def calculate_stats(day_states, year, month=None):
+    office_count = 0
+    home_count = 0
+    total_work = 0
+    for day_str, state in day_states.items():
+        try:
+            d = datetime.strptime(day_str, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if d.year != year:
+            continue
+        if month is not None and d.month != month:
+            continue
+        if state == "office":
+            office_count += 1
+            total_work += 1
+        elif state == "home":
+            home_count += 1
+            total_work += 1
+    if total_work > 0:
+        office_percent = round((office_count / total_work) * 100, 2)
+        home_percent = round((home_count / total_work) * 100, 2)
+    else:
+        office_percent = 0
+        home_percent = 0
+    return {"office": office_percent, "home": home_percent, "total_work_days": total_work}
+
+# --- Decorator ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -66,12 +100,12 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# --- Routes ---
+
 @app.route("/")
 @login_required
 def index():
-    # The main page shows a calendar for non-admin users.
-    # For admin, we show a button to view all users' statistics.
-    return render_template("index.html", email=session["email"])
+    return render_template("index.html", email=session["email"], lock_past_months=config["lock_past_months"])
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -110,6 +144,26 @@ def logout():
     flash("You have been logged out.")
     return redirect(url_for("login"))
 
+@app.route("/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    email = session["email"]
+    if request.method == "POST":
+        current_password = request.form.get("current_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+        if not check_password_hash(users.get(email), current_password):
+            flash("Current password is incorrect.")
+            return redirect(url_for("change_password"))
+        if new_password != confirm_password:
+            flash("New passwords do not match.")
+            return redirect(url_for("change_password"))
+        users[email] = generate_password_hash(new_password)
+        save_users()
+        flash("Password changed successfully!")
+        return redirect(url_for("index"))
+    return render_template("change_password.html")
+
 @app.route("/api/days", methods=["GET"])
 @login_required
 def get_days():
@@ -145,36 +199,8 @@ def update_day():
     if state not in ["empty", "office", "home", "day_off"]:
         return jsonify({"error": "Invalid state"}), 400
     day_states[day] = state
-    save_day_states()  # Save changes persistently
+    save_day_states()
     return jsonify({"success": True, "date": day, "state": state})
-
-def calculate_stats(day_states, year, month=None):
-    office_count = 0
-    home_count = 0
-    total_work = 0
-    for day_str, state in day_states.items():
-        try:
-            d = datetime.strptime(day_str, "%Y-%m-%d").date()
-        except ValueError:
-            continue
-        if d.year != year:
-            continue
-        if month is not None and d.month != month:
-            continue
-        # Only count office and home as work days (day_off is not counted)
-        if state == "office":
-            office_count += 1
-            total_work += 1
-        elif state == "home":
-            home_count += 1
-            total_work += 1
-    if total_work > 0:
-        office_percent = round((office_count / total_work) * 100, 2)
-        home_percent = round((home_count / total_work) * 100, 2)
-    else:
-        office_percent = 0
-        home_percent = 0
-    return {"office": office_percent, "home": home_percent, "total_work_days": total_work}
 
 @app.route("/api/stats", methods=["GET"])
 @login_required
@@ -198,56 +224,14 @@ def stats():
         result["year"] = year
     return jsonify(result)
 
-@app.route("/change_password", methods=["GET", "POST"])
-@login_required
-def change_password():
-    email = session["email"]
-    if request.method == "POST":
-        current_password = request.form.get("current_password")
-        new_password = request.form.get("new_password")
-        confirm_password = request.form.get("confirm_password")
-        # Ellenőrizzük, hogy a megadott jelenlegi jelszó egyezik-e a tároltal
-        if not check_password_hash(users.get(email), current_password):
-            flash("Current password is incorrect.")
-            return redirect(url_for("change_password"))
-        if new_password != confirm_password:
-            flash("New passwords do not match.")
-            return redirect(url_for("change_password"))
-        # Frissítjük a jelszót
-        users[email] = generate_password_hash(new_password)
-        # Mentjük a változtatást
-        with open(USERS_FILE, "w") as f:
-            json.dump(users, f)
-        flash("Password changed successfully!")
-        return redirect(url_for("index"))
-    return render_template("change_password.html")
+# --- Admin routes ---
 
-@app.route("/admin/reset_password/<string:user_email>")
-@login_required
-def admin_reset_password(user_email):
-    # Csak az admin férhet hozzá
-    if session["email"] != "admin@example.com":
-        flash("Access denied.")
-        return redirect(url_for("index"))
-    # Ellenőrizzük, hogy az adott felhasználó létezik-e
-    if user_email not in users:
-        flash("User not found.")
-        return redirect(url_for("admin_stats"))
-    # Reseteljük a jelszót "apple123"-ra
-    users[user_email] = generate_password_hash("apple123")
-    with open(USERS_FILE, "w") as f:
-        json.dump(users, f)
-    flash(f"Password for {user_email} has been reset to apple123.")
-    return redirect(url_for("admin_stats"))
-
-# --- Admin Dashboard ---
 @app.route("/admin/stats")
 @login_required
 def admin_stats():
     if session["email"] != "admin@example.com":
         flash("Access denied.")
         return redirect(url_for("index"))
-    # Ha a URL-ben meg van adva az év, azt használjuk, különben a jelenlegi évet.
     year_param = request.args.get("year")
     try:
         current_year = int(year_param) if year_param else datetime.now().year
@@ -255,7 +239,6 @@ def admin_stats():
         current_year = datetime.now().year
 
     stats_data = []
-    # Iterálunk az összes felhasználón (kivéve az admin) statisztikáin
     for email in users:
         if email == "admin@example.com":
             continue
@@ -270,7 +253,37 @@ def admin_stats():
             "yearly": yearly_stats
         })
     return render_template("admin_stats.html", stats_data=stats_data,
-                           current_year=current_year)
+                           current_year=current_year, config=config)
+
+@app.route("/admin/reset_password/<string:user_email>")
+@login_required
+def admin_reset_password(user_email):
+    if session["email"] != "admin@example.com":
+        flash("Access denied.")
+        return redirect(url_for("index"))
+    if user_email not in users:
+        flash("User not found.")
+        return redirect(url_for("admin_stats"))
+    users[user_email] = generate_password_hash("apple123")
+    save_users()
+    flash(f"Password for {user_email} has been reset to apple123.")
+    return redirect(url_for("admin_stats"))
+
+@app.route("/admin/toggle_lock")
+@login_required
+def toggle_lock():
+    if session["email"] != "admin@example.com":
+        flash("Access denied.")
+        return redirect(url_for("index"))
+    value = request.args.get("value", "true").lower()
+    if value == "true":
+        config["lock_past_months"] = True
+    else:
+        config["lock_past_months"] = False
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f)
+    flash("Lock configuration updated.")
+    return redirect(url_for("admin_stats"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=9090, debug=True)

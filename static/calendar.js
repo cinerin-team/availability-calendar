@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const yearlyStatsDiv = document.getElementById("yearly-stats");
     
     function loadCalendar(year, month) {
-        // month: 1-12
         fetch(`/api/days?year=${year}&month=${month}`)
             .then(response => response.json())
             .then(data => {
@@ -52,7 +51,15 @@ document.addEventListener("DOMContentLoaded", function() {
             cell.dataset.day = day;
             
             cell.addEventListener("click", function() {
-                // Cycle statuses: empty → office → home → day_off → empty
+                // Ha a lockPastMonths kapcsoló be van kapcsolva, ellenőrizzük az aktuális hónapot
+                if (typeof lockPastMonths !== 'undefined' && lockPastMonths) {
+                    let now = new Date();
+                    if (year !== now.getFullYear() || month !== (now.getMonth() + 1)) {
+                        alert("Modifications are locked for months other than the current month.");
+                        return;
+                    }
+                }
+                // Állapotváltás: empty → office → home → day_off → empty
                 let newState;
                 if (state === "empty") {
                     newState = "office";
@@ -104,7 +111,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     
     function updateStats(year, month) {
-        // Update monthly stats
         fetch(`/api/stats?year=${year}&month=${month}`)
             .then(response => response.json())
             .then(data => {
@@ -119,7 +125,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     monthlyStatsDiv.style.backgroundColor = "lightcoral";
                 }
             });
-        // Update yearly stats
         fetch(`/api/stats?year=${year}`)
             .then(response => response.json())
             .then(data => {
@@ -151,6 +156,5 @@ document.addEventListener("DOMContentLoaded", function() {
         loadCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
     });
     
-    // Initial load with current month
     loadCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
 });

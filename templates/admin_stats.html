@@ -18,10 +18,18 @@
         <button type="submit">Load</button>
     </form>
     
+    <!-- Kapcsoló a múlt hónapok zárolásához -->
+    {% if config.lock_past_months %}
+        <a href="/admin/toggle_lock?value=false"><button>Unlock Past Months</button></a>
+    {% else %}
+        <a href="/admin/toggle_lock?value=true"><button>Lock Past Months</button></a>
+    {% endif %}
+    
     <h2>Statistics for Year {{ current_year }}</h2>
     {% for stat in stats_data %}
     <h3>User: {{ stat.email }}
-	<a href="/admin/reset_password/{{ stat.email }}"><button>Reset Password to apple123</button></a>
+        <!-- Reset password gomb az admin részére -->
+        <a href="/admin/reset_password/{{ stat.email }}"><button>Reset Password to apple123</button></a>
     </h3>
     <table>
         <thead>

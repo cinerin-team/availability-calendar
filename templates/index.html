@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>60-40 Calculator</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        // Globális változó: lockPastMonths értéke a konfigurációból
+        var lockPastMonths = {{ lock_past_months|tojson }};
+    </script>
 </head>
 <body>
     <div id="user-info">
