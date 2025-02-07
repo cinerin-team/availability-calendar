@@ -26,9 +26,9 @@ if os.path.exists(USERS_FILE):
 else:
     users = {}
 
-# If no admin user exists, create one
-if "admin" not in users:
-    users["admin"] = "admin123"
+# If no admin user exists, create one with email "admin@example.com"
+if "admin@example.com" not in users:
+    users["admin@example.com"] = "admin123"
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
 
@@ -36,7 +36,7 @@ def save_users():
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
 
-# Load calendar data (stored per user)
+# Load calendar data (stored per user, key = email)
 if os.path.exists(DAY_STATES_FILE):
     with open(DAY_STATES_FILE, "r") as f:
         try:
@@ -50,18 +50,17 @@ def save_day_states():
     with open(DAY_STATES_FILE, "w") as f:
         json.dump(day_states_all, f)
 
-def get_user_day_states(username):
-    """If the user has no calendar data yet, initialize an empty dictionary."""
-    if username not in day_states_all:
-        day_states_all[username] = {}
-    return day_states_all[username]
+def get_user_day_states(email):
+    """Initialize an empty calendar for the user if it doesn't exist yet."""
+    if email not in day_states_all:
+        day_states_all[email] = {}
+    return day_states_all[email]
 
 # Login required decorator
 def login_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "username" not in session:
+        if "email" not in session:
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
@@ -70,20 +69,20 @@ def login_required(f):
 @login_required
 def index():
     # Main page shows the logged-in user's calendar
-    return render_template("index.html", username=session["username"])
+    return render_template("index.html", email=session["email"])
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
-        if not username or not password:
-            flash("Please provide both username and password.")
+        if not email or not password:
+            flash("Please provide both email and password.")
             return redirect(url_for("register"))
-        if username in users:
-            flash("Username already taken.")
+        if email in users:
+            flash("Email already registered.")
             return redirect(url_for("register"))
-        users[username] = password
+        users[email] = password
         save_users()
         flash("Registration successful! You can now log in.")
         return redirect(url_for("login"))
@@ -92,28 +91,28 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
+        email = request.form.get("email")
         password = request.form.get("password")
-        if username in users and users[username] == password:
-            session["username"] = username
+        if email in users and users[email] == password:
+            session["email"] = email
             flash("Logged in successfully!")
             return redirect(url_for("index"))
         else:
-            flash("Incorrect username or password.")
+            flash("Incorrect email or password.")
             return redirect(url_for("login"))
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    session.pop("username", None)
+    session.pop("email", None)
     flash("You have been logged out.")
     return redirect(url_for("login"))
 
 @app.route("/api/days", methods=["GET"])
 @login_required
 def get_days():
-    username = session["username"]
-    day_states = get_user_day_states(username)
+    email = session["email"]
+    day_states = get_user_day_states(email)
     year = request.args.get("year")
     month = request.args.get("month")
     if not year or not month:
@@ -134,8 +133,8 @@ def get_days():
 @app.route("/api/day", methods=["POST"])
 @login_required
 def update_day():
-    username = session["username"]
-    day_states = get_user_day_states(username)
+    email = session["email"]
+    day_states = get_user_day_states(email)
     data = request.get_json()
     if not data or "date" not in data or "state" not in data:
         return jsonify({"error": "Invalid data"}), 400
@@ -144,7 +143,7 @@ def update_day():
     if state not in ["empty", "office", "home", "day_off"]:
         return jsonify({"error": "Invalid state"}), 400
     day_states[day] = state
-    save_day_states()  # Save changes to file
+    save_day_states()  # Save changes persistently
     return jsonify({"success": True, "date": day, "state": state})
 
 def calculate_stats(day_states, year, month=None):
@@ -178,8 +177,8 @@ def calculate_stats(day_states, year, month=None):
 @app.route("/api/stats", methods=["GET"])
 @login_required
 def stats():
-    username = session["username"]
-    day_states = get_user_day_states(username)
+    email = session["email"]
+    day_states = get_user_day_states(email)
     year = request.args.get("year")
     if not year:
         now = datetime.now()

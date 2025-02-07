@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function() {
             cell.dataset.day = day;
             
             cell.addEventListener("click", function() {
-                // Cycle statuses: empty -> office -> home -> day_off -> empty
+                // Cycle statuses: empty → office → home → day_off → empty
                 let newState;
                 if (state === "empty") {
                     newState = "office";
@@ -104,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     
     function updateStats(year, month) {
+    // Update monthly stats
         fetch(`/api/stats?year=${year}&month=${month}`)
             .then(response => response.json())
             .then(data => {
@@ -112,7 +113,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     Home: ${data.home}%<br>
                     Total Work Days: ${data.total_work_days}
                 `;
+            // Ha az office arány 60% vagy annál magasabb, akkor zöld, különben piros
+                if (data.office >= 60) {
+                    monthlyStatsDiv.style.backgroundColor = "lightgreen";
+                } else {
+                    monthlyStatsDiv.style.backgroundColor = "lightcoral";
+                }
             });
+    // Update yearly stats
         fetch(`/api/stats?year=${year}`)
             .then(response => response.json())
             .then(data => {
@@ -121,6 +129,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     Home: ${data.home}%<br>
                     Total Work Days: ${data.total_work_days}
                 `;
+                if (data.office >= 60) {
+                    yearlyStatsDiv.style.backgroundColor = "lightgreen";
+                } else {
+                    yearlyStatsDiv.style.backgroundColor = "lightcoral";
+                }
             });
     }
     

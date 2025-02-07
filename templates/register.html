@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Regisztráció</title>
+    <title>Register</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Regisztráció</h1>
+    <h1>Register</h1>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul class="flashes">
@@ -17,12 +17,12 @@
       {% endif %}
     {% endwith %}
     <form method="POST" action="/register">
-        <label for="username">Felhasználónév:</label>
-        <input type="text" id="username" name="username" required><br><br>
-        <label for="password">Jelszó:</label>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+        <label for="password">Password:</label>
         <input type="password" id="password" name="password" required><br><br>
-        <button type="submit">Regisztráció</button>
+        <button type="submit">Register</button>
     </form>
-    <p>Már van fiókod? <a href="/login">Jelentkezz be!</a></p>
+    <p>Already have an account? <a href="/login">Log in here!</a></p>
 </body>
 </html>
