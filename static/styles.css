@@ -3,6 +3,11 @@ body {
     margin: 20px;
 }
 
+#user-info {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
 #calendar {
     margin-top: 20px;
 }
@@ -18,7 +23,7 @@ th, td {
     padding: 10px;
 }
 
-/* Háttérszínek a napok állapota szerint */
+/* Colors for day statuses */
 td.empty {
     background-color: #fff;
 }
@@ -31,11 +36,15 @@ td.home {
     background-color: #afa;
 }
 
+td.day_off {
+    background-color: #ddd;
+}
+
 #calendar-controls {
     margin-bottom: 10px;
 }
 
-/* Legend stílusok */
+/* Legend styles */
 #legend {
     margin-top: 20px;
     padding: 10px;
@@ -71,4 +80,15 @@ td.home {
 
 .legend-box.home {
     background-color: #afa;
+}
+
+.legend-box.day_off {
+    background-color: #ddd;
+}
+
+/* Flash messages */
+.flashes {
+    list-style: none;
+    padding: 0;
+    color: red;
 }
