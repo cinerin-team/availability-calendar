@@ -29,7 +29,7 @@ else:
 
 # If no admin user exists, create one with email "admin@example.com"
 if "admin@example.com" not in users:
-    users["admin@example.com"] = "admin123"
+    users["admin@example.com"] = generate_password_hash("admin123")
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
 
@@ -84,7 +84,7 @@ def register():
         if email in users:
             flash("Email already registered.")
             return redirect(url_for("register"))
-        users[email] = password
+        users[email] = generate_password_hash(password)
         save_users()
         flash("Registration successful! You can now log in.")
         return redirect(url_for("login"))
@@ -95,7 +95,7 @@ def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
-        if email in users and users[email] == password:
+        if email in users and check_password_hash(users[email], password):
             session["email"] = email
             flash("Logged in successfully!")
             return redirect(url_for("index"))
@@ -207,14 +207,14 @@ def change_password():
         new_password = request.form.get("new_password")
         confirm_password = request.form.get("confirm_password")
         # Ellenőrizzük, hogy a megadott jelenlegi jelszó egyezik-e a tároltal
-        if users.get(email) != current_password:
+        if not check_password_hash(users.get(email), current_password):
             flash("Current password is incorrect.")
             return redirect(url_for("change_password"))
         if new_password != confirm_password:
             flash("New passwords do not match.")
             return redirect(url_for("change_password"))
         # Frissítjük a jelszót
-        users[email] = new_password
+        users[email] = generate_password_hash(new_password)
         # Mentjük a változtatást
         with open(USERS_FILE, "w") as f:
             json.dump(users, f)
@@ -234,7 +234,7 @@ def admin_reset_password(user_email):
         flash("User not found.")
         return redirect(url_for("admin_stats"))
     # Reseteljük a jelszót "apple123"-ra
-    users[user_email] = "apple123"
+    users[user_email] = generate_password_hash("apple123")
     with open(USERS_FILE, "w") as f:
         json.dump(users, f)
     flash(f"Password for {user_email} has been reset to apple123.")
