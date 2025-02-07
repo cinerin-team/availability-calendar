@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, s
 from datetime import datetime, date
 import calendar
 from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "this-is-a-secret-key"  # For production, use a stronger random key
@@ -196,6 +197,48 @@ def stats():
         result = calculate_stats(day_states, year)
         result["year"] = year
     return jsonify(result)
+
+@app.route("/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    email = session["email"]
+    if request.method == "POST":
+        current_password = request.form.get("current_password")
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+        # Ellenőrizzük, hogy a megadott jelenlegi jelszó egyezik-e a tároltal
+        if users.get(email) != current_password:
+            flash("Current password is incorrect.")
+            return redirect(url_for("change_password"))
+        if new_password != confirm_password:
+            flash("New passwords do not match.")
+            return redirect(url_for("change_password"))
+        # Frissítjük a jelszót
+        users[email] = new_password
+        # Mentjük a változtatást
+        with open(USERS_FILE, "w") as f:
+            json.dump(users, f)
+        flash("Password changed successfully!")
+        return redirect(url_for("index"))
+    return render_template("change_password.html")
+
+@app.route("/admin/reset_password/<string:user_email>")
+@login_required
+def admin_reset_password(user_email):
+    # Csak az admin férhet hozzá
+    if session["email"] != "admin@example.com":
+        flash("Access denied.")
+        return redirect(url_for("index"))
+    # Ellenőrizzük, hogy az adott felhasználó létezik-e
+    if user_email not in users:
+        flash("User not found.")
+        return redirect(url_for("admin_stats"))
+    # Reseteljük a jelszót "apple123"-ra
+    users[user_email] = "apple123"
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f)
+    flash(f"Password for {user_email} has been reset to apple123.")
+    return redirect(url_for("admin_stats"))
 
 # --- Admin Dashboard ---
 @app.route("/admin/stats")

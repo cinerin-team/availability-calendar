@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - User Statistics</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div id="user-info">
+        Logged in as: {{ session.email }} | <a href="/logout">Logout</a> | <a href="/">Back</a>
+    </div>
+    <h1>Admin Dashboard - User Statistics</h1>
+    
+    <!-- Év választó űrlap -->
+    <form action="/admin/stats" method="get">
+        <label for="year">Select Year:</label>
+        <input type="number" id="year" name="year" value="{{ current_year }}" min="2000" max="2100">
+        <button type="submit">Load</button>
+    </form>
+    
+    <h2>Statistics for Year {{ current_year }}</h2>
+    {% for stat in stats_data %}
+    <h3>User: {{ stat.email }}
+	<a href="/admin/reset_password/{{ stat.email }}"><button>Reset Password to apple123</button></a>
+    </h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Office %</th>
+                <th>Home %</th>
+                <th>Total Work Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in range(1, 13) %}
+            <tr style="background-color: {% if stat.monthly[m].office >= 60 %}lightgreen{% else %}lightcoral{% endif %};">
+                <td>{{ m }}</td>
+                <td>{{ stat.monthly[m].office }}%</td>
+                <td>{{ stat.monthly[m].home }}%</td>
+                <td>{{ stat.monthly[m].total_work_days }}</td>
+            </tr>
+            {% endfor %}
+            <tr style="font-weight: bold; background-color: {% if stat.yearly.office >= 60 %}lightgreen{% else %}lightcoral{% endif %};">
+                <td>Yearly</td>
+                <td>{{ stat.yearly.office }}%</td>
+                <td>{{ stat.yearly.home }}%</td>
+                <td>{{ stat.yearly.total_work_days }}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endfor %}
+</body>
+</html>
