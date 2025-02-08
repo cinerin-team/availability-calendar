@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: availability-calendar
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: availability-calendar
+  template:
+    metadata:
+      labels:
+        app: availability-calendar
+    spec:
+      containers:
+      - name: availability-calendar
+        image: availability_calendar:latest
+        ports:
+        - containerPort: 9090
+          hostPort: 9090
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: data-folder
+          mountPath: /app/data
+      volumes:
+      - name: data-folder
+        hostPath:
+          path: /home/user/availability-calendar/data
+          type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: availability-calendar-service
+spec:
+  selector:
+    app: availability-calendar
+  ports:
+  - protocol: TCP
+    port: 9090         # A Service által elérhető port a klaszteren belül
+    targetPort: 9090   # A konténerben futó alkalmazás portja
+  type: ClusterIP
+
