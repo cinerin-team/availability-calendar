@@ -1,94 +1,118 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+  font-family: Arial, sans-serif;
+  margin: 20px;
 }
 
 #user-info {
-    text-align: right;
-    margin-bottom: 10px;
+  text-align: right;
+  margin-bottom: 10px;
 }
 
 #calendar {
-    margin-top: 20px;
+  margin-top: 20px;
+}
+
+/* Restrict the calendar table width to be more compact and centered */
+#calendar table {
+  width: auto;
+  max-width: 600px;
+  margin: auto;
 }
 
 table {
-    border-collapse: collapse;
-    width: 100%;
+  border-collapse: collapse;
 }
 
 th, td {
-    border: 1px solid #ccc;
-    text-align: center;
-    padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  padding: 10px;
 }
 
-/* Day status colors */
+/* Colors for day statuses */
 td.empty {
-    background-color: #fff;
+  background-color: #fff;
 }
 
 td.office {
-    background-color: #aaf;
+  background-color: #aaf;
 }
 
 td.home {
-    background-color: #afa;
+  background-color: #afa;
 }
 
 td.day_off {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 #calendar-controls {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+/* Style for current month-year display */
+#current-month-year {
+  font-size: 2em;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+/* Flex container for stats and legend arranged side by side */
+#stats-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+#stats-container > div {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
 }
 
 /* Legend styles */
 #legend {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    width: fit-content;
+  width: fit-content;
 }
 
 #legend ul {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
 }
 
 #legend li {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
 }
 
 .legend-box {
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    border: 1px solid #ccc;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
 }
 
 .legend-box.empty {
-    background-color: #fff;
+  background-color: #fff;
 }
 
 .legend-box.office {
-    background-color: #aaf;
+  background-color: #aaf;
 }
 
 .legend-box.home {
-    background-color: #afa;
+  background-color: #afa;
 }
 
 .legend-box.day_off {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 /* Flash messages */
 .flashes {
-    list-style: none;
-    padding: 0;
-    color: red;
+  list-style: none;
+  padding: 0;
+  color: red;
 }

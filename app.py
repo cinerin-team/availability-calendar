@@ -1,26 +1,31 @@
 import os
 import json
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash
+import csv
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, Response
 from datetime import datetime, date
 import calendar
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "cirm0sc1ca-haj-hová-lett-avaj1!G"  # For production, use a stronger random key
+app.secret_key = "cirm0sc1ca-haj-hová-lett-avaj1!"  # For production, use a stronger random key
 
-# --- Configuration handling ---
+# ---------------------------
+# Configuration file handling
+# ---------------------------
 CONFIG_FILE = "data/config.json"
 if os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
 else:
-    config = {"lock_past_months": True}  # Alapértelmezett: lezárt (csak az aktuális hónap módosítható)
+    config = {"lock_past_months": True}  # default: lock modifications for non-current months
     os.makedirs("data", exist_ok=True)
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f)
 
-# --- Users and Day States ---
+# ---------------------------
+# Users and Day States
+# ---------------------------
 USERS_FILE = "data/users.json"
 DAY_STATES_FILE = "data/day_states.json"
 
@@ -34,7 +39,7 @@ if os.path.exists(USERS_FILE):
 else:
     users = {}
 
-# Create admin user if not exists (password hash used)
+# Create admin account if not exists (hashed password)
 if "admin@example.com" not in users:
     users["admin@example.com"] = generate_password_hash("admin123")
     with open(USERS_FILE, "w") as f:
@@ -63,35 +68,9 @@ def get_user_day_states(email):
         day_states_all[email] = {}
     return day_states_all[email]
 
-# --- Helper function for statistics ---
-def calculate_stats(day_states, year, month=None):
-    office_count = 0
-    home_count = 0
-    total_work = 0
-    for day_str, state in day_states.items():
-        try:
-            d = datetime.strptime(day_str, "%Y-%m-%d").date()
-        except ValueError:
-            continue
-        if d.year != year:
-            continue
-        if month is not None and d.month != month:
-            continue
-        if state == "office":
-            office_count += 1
-            total_work += 1
-        elif state == "home":
-            home_count += 1
-            total_work += 1
-    if total_work > 0:
-        office_percent = round((office_count / total_work) * 100, 2)
-        home_percent = round((home_count / total_work) * 100, 2)
-    else:
-        office_percent = 0
-        home_percent = 0
-    return {"office": office_percent, "home": home_percent, "total_work_days": total_work}
-
-# --- Decorator ---
+# ---------------------------
+# Login required decorator
+# ---------------------------
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -100,11 +79,13 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- Routes ---
-
+# ---------------------------
+# Routes
+# ---------------------------
 @app.route("/")
 @login_required
 def index():
+    # Pass the lock setting to the template
     return render_template("index.html", email=session["email"], lock_past_months=config["lock_past_months"])
 
 @app.route("/register", methods=["GET", "POST"])
@@ -202,6 +183,33 @@ def update_day():
     save_day_states()
     return jsonify({"success": True, "date": day, "state": state})
 
+def calculate_stats(day_states, year, month=None):
+    office_count = 0
+    home_count = 0
+    total_work = 0
+    for day_str, state in day_states.items():
+        try:
+            d = datetime.strptime(day_str, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if d.year != year:
+            continue
+        if month is not None and d.month != month:
+            continue
+        if state == "office":
+            office_count += 1
+            total_work += 1
+        elif state == "home":
+            home_count += 1
+            total_work += 1
+    if total_work > 0:
+        office_percent = round((office_count / total_work) * 100, 2)
+        home_percent = round((home_count / total_work) * 100, 2)
+    else:
+        office_percent = 0
+        home_percent = 0
+    return {"office": office_percent, "home": home_percent, "total_working_days": total_work}
+
 @app.route("/api/stats", methods=["GET"])
 @login_required
 def stats():
@@ -224,8 +232,9 @@ def stats():
         result["year"] = year
     return jsonify(result)
 
-# --- Admin routes ---
-
+# ---------------------------
+# Admin routes
+# ---------------------------
 @app.route("/admin/stats")
 @login_required
 def admin_stats():
@@ -276,14 +285,35 @@ def toggle_lock():
         flash("Access denied.")
         return redirect(url_for("index"))
     value = request.args.get("value", "true").lower()
-    if value == "true":
-        config["lock_past_months"] = True
-    else:
-        config["lock_past_months"] = False
+    config["lock_past_months"] = True if value == "true" else False
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f)
     flash("Lock configuration updated.")
     return redirect(url_for("admin_stats"))
+
+@app.route("/admin/export_csv")
+@login_required
+def export_csv():
+    if session["email"] != "admin@example.com":
+        flash("Access denied.")
+        return redirect(url_for("index"))
+    output = []
+    header = ["User Email", "Date", "Status"]
+    output.append(header)
+    for email, days in day_states_all.items():
+        for day_str, status in days.items():
+            output.append([email, day_str, status])
+    def generate():
+        data = []
+        for row in output:
+            data.append(",".join(row))
+        return "\n".join(data)
+    csv_data = generate()
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=day_states.csv"}
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=9090, debug=True)
