@@ -12,7 +12,7 @@ body {
   margin-top: 20px;
 }
 
-/* Restrict the calendar table width to be more compact and centered */
+/* Monthly calendar table compact & centered */
 #calendar table {
   width: auto;
   max-width: 600px;
@@ -29,35 +29,24 @@ th, td {
   padding: 10px;
 }
 
-/* Colors for day statuses */
-td.empty {
-  background-color: #fff;
-}
-
-td.office {
-  background-color: #aaf;
-}
-
-td.home {
-  background-color: #afa;
-}
-
-td.day_off {
-  background-color: #ddd;
-}
+/* Status colors */
+td.empty { background-color: #fff; }
+td.office { background-color: #aaf; }
+td.home { background-color: #afa; }
+td.day_off { background-color: #ddd; }
 
 #calendar-controls {
   margin-bottom: 10px;
 }
 
-/* Style for current month-year display */
+/* Month-Year display */
 #current-month-year {
   font-size: 2em;
   font-weight: bold;
   margin-left: 10px;
 }
 
-/* Flex container for stats and legend arranged side by side */
+/* Stats + Legend side by side */
 #stats-container {
   display: flex;
   justify-content: space-around;
@@ -71,48 +60,47 @@ td.day_off {
   border: 1px solid #ccc;
 }
 
-/* Legend styles */
-#legend {
-  width: fit-content;
-}
-
-#legend ul {
-  list-style: none;
-  padding: 0;
-}
-
-#legend li {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.legend-box {
-  width: 20px;
-  height: 20px;
-  margin-right: 10px;
-  border: 1px solid #ccc;
-}
-
-.legend-box.empty {
-  background-color: #fff;
-}
-
-.legend-box.office {
-  background-color: #aaf;
-}
-
-.legend-box.home {
-  background-color: #afa;
-}
-
-.legend-box.day_off {
-  background-color: #ddd;
-}
+/* Legend */
+#legend { width: fit-content; }
+#legend ul { list-style: none; padding: 0; }
+#legend li { display: flex; align-items: center; margin-bottom: 5px; }
+.legend-box { width: 20px; height: 20px; margin-right: 10px; border: 1px solid #ccc; }
+.legend-box.empty { background-color: #fff; }
+.legend-box.office { background-color: #aaf; }
+.legend-box.home { background-color: #afa; }
+.legend-box.day_off { background-color: #ddd; }
 
 /* Flash messages */
-.flashes {
-  list-style: none;
-  padding: 0;
-  color: red;
+.flashes { list-style: none; padding: 0; color: red; }
+
+/* ---- All Year grid ---- */
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 980px;
+  margin: 20px auto;
+}
+
+.month-card {
+  border: 1px solid #ccc;
+  padding: 8px;
+  background: #fafafa;
+}
+
+.month-title {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+/* Smaller tables for year view */
+.year-grid table {
+  width: 100%;
+  font-size: 0.85em;
+}
+
+.year-grid th,
+.year-grid td {
+  padding: 6px;
 }

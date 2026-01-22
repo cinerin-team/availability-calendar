@@ -181,3 +181,14 @@ The 60-40 Calculator is a Docker Compose–based web application built with Flas
       Password: admin123
 
 Happy coding!
+
+## kubernetes code change
+
+rm availability_calendar.tar
+docker build -t availability_calendar:latest .
+docker save availability_calendar:latest -o availability_calendar.tar
+sudo k3s ctr image import availability_calendar.tar
+kubectl scale deployment availability-calendar --replicas=0
+kubectl set image deployment/availability-calendar availability-calendar=availability_calendar:latest
+kubectl scale deployment availability-calendar --replicas=1
+
