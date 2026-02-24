@@ -35,14 +35,14 @@ td.office { background-color: #aaf; }
 td.home { background-color: #afa; }
 td.day_off { background-color: #ddd; }
 
-/* Non-working days (weekends/holidays/rest days) - darker grey, not selectable */
+/* Non-working days */
 td.blocked-day {
   background-color: #b3b3b3 !important;
   color: #555;
   cursor: not-allowed;
 }
 
-/* Today outline: thicker "frame" without changing layout */
+/* Today outline */
 td.today-cell {
   box-shadow: inset 0 0 0 2px #000;
 }
@@ -58,7 +58,14 @@ td.today-cell {
   margin-left: 10px;
 }
 
-/* Stats + Legend side by side */
+/* Warning next to header */
+.rules-warning {
+  margin-left: 10px;
+  font-weight: bold;
+  color: #b00020;
+  display: none;
+}
+
 #stats-container {
   display: flex;
   justify-content: space-around;
@@ -83,11 +90,7 @@ td.today-cell {
 .legend-box.day_off { background-color: #ddd; }
 
 /* Flash messages */
-.flashes {
-  list-style: none;
-  padding: 0;
-  color: red;
-}
+.flashes { list-style: none; padding: 0; color: red; }
 
 /* ---- All Year grid ---- */
 .year-grid {
@@ -110,7 +113,6 @@ td.today-cell {
   margin-bottom: 6px;
 }
 
-/* Smaller tables for year view */
 .year-grid table {
   width: 100%;
   font-size: 0.85em;

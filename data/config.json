@@ -1,0 +1,45 @@
+{
+  "lock_past_months": false,
+  "hu_workday_swaps": {
+    "2025": {
+      "working_weekends": [
+        "2025-05-17",
+        "2025-10-18",
+        "2025-12-13"
+      ],
+      "rest_days": [
+        "2025-05-02",
+        "2025-10-24",
+        "2025-12-24"
+      ]
+    },
+    "2026": {
+      "working_weekends": [
+        "2026-01-10",
+        "2026-08-08",
+        "2026-12-12"
+      ],
+      "rest_days": [
+        "2026-01-02",
+        "2026-08-21",
+        "2026-12-24"
+      ]
+    },
+    "2028": {
+      "last_attempt": "2026-02-24T12:42:35",
+      "status": "missing",
+      "error": "Could not locate decree content for 2028 (not published yet or unreachable)"
+    },
+    "2027": {
+      "last_attempt": "2026-02-24T13:20:55",
+      "status": "missing",
+      "error": "Could not locate decree content for 2027 (not published yet or unreachable)"
+    }
+  },
+  "swap_autofetch": {
+    "enabled": true,
+    "attempt_ttl_hours": 24,
+    "max_scan": 60,
+    "max_future_years_ahead": 2
+  }
+}
